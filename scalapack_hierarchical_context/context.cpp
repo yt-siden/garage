@@ -4,6 +4,7 @@
 #include <iostream>
 #include <iomanip>
 #include <sstream>
+#include <tuple>
 
 template <typename T>
 T conv(const char* str)
@@ -12,6 +13,33 @@ T conv(const char* str)
     T ret;
     ss >> ret;
     return ret;
+}
+
+// nproc, nblock, myproc -> start_idx, bsize
+std::tuple<int, int> get_range(const int nproc, const int nblock, const int myproc)
+{
+    int mod = nproc % nblock;
+    int bsize = nproc / nblock;
+    int start_idx = myproc / bsize * bsize;
+
+    if (mod)
+    {
+        ++bsize;
+        int tmp = myproc / bsize;
+        if (tmp < mod)
+        {
+            start_idx = myproc / bsize * bsize;
+        }
+        else
+        {
+            int tmp3 = myproc - mod*bsize;
+            --bsize;
+            start_idx = tmp3 / bsize * bsize;
+            start_idx += mod*(bsize+1);
+        }
+    }
+
+    return std::make_tuple(start_idx, bsize);
 }
 
 int main(int argc, char* argv[])
@@ -74,36 +102,52 @@ int main(int argc, char* argv[])
     blacs_gridinfo_(&global_context, &nprow, &npcol, &mygrow, &mygcol);
 
     // calc each process block size
-    int nplrow = nprow / npbrow;
-    int nplcol = npcol / npbcol;
-    int mypbrow = mygrow / nplrow;
-    int mypbcol = mygcol / nplcol;
-    if (nprow % npbrow)
-    {
-        int tmp = nplrow + 1;
-        nplrow += (mygrow / tmp < nprow % tmp);
-    }
-    if (npcol % npbcol)
-    {
-        int tmp = nplcol + 1;
-        nplcol += (mygcol / tmp < npcol % tmp);
-    }
+    int lrspos, lcspos, lrsize, lcsize;
+    std::tie(lrspos, lrsize) = get_range(nprow, npbrow, mygrow);
+    std::tie(lcspos, lcsize) = get_range(npcol, npbcol, mygcol);
 
-    // output
+    // define grid map
+    int usermap[lrsize*lcsize];
+    for (int i=0; i<lcsize; ++i)
+    for (int j=0; j<lrsize; ++j)
+        usermap[i*lrsize+j] = (lrspos+j)*npcol + lcspos + i;
+
+    // output 1
     for (int i=0; i<pnum; ++i)
     {
         if (mypnum == i)
         {
-            std::cout << "mypnum=" << std::setw(3) << mypnum
-                << ", mygrow=" << std::setw(3) << mygrow
-                << ", mygcol=" << std::setw(3) << mygcol
-                << ", nplrow=" << std::setw(3) << nplrow
-                << ", nplcol=" << std::setw(3) << nplcol
-                << std::endl;
+            std::cout << "[" << std::setw(3) << mypnum << " (" << std::setw(3) << mygrow << "," << std::setw(3) << mygcol << ")]: ";
+            for (int i=0; i<lrsize*lcsize; ++i)
+                std::cout << std::setw(3) << usermap[i];
+            std::cout << std::endl;
             usleep(10000);
         }
         blacs_barrier_(&global_context, "A");
     }
 
+    // create new sub-grid
+    int local_context;
+    blacs_get_(&one, &zero, &local_context);
+    blacs_gridmap_(&local_context, usermap, &lrsize, &lrsize, &lcsize);
+
+    int mylrow, mylcol, nplrow, nplcol;
+    blacs_gridinfo_(&local_context, &nplrow, &nplcol, &mylrow, &mylcol);
+
+    // output 2
+    for (int i=0; i<pnum; ++i)
+    {
+        if (mypnum == i)
+        {
+            std::cout << "[" << std::setw(3) << mypnum << " (" << std::setw(3) << mygrow << "," << std::setw(3) << mygcol << ")]: "
+                << "(" << std::setw(3) << mylrow << "," << std::setw(3) << mylcol << ") / ("
+                << std::setw(3) << nplrow << "," << std::setw(3) << nplcol << ")" << std::endl;
+            usleep(10000);
+        }
+        blacs_barrier_(&global_context, "A");
+    }
+
+    // release contexts
+    blacs_gridexit_(&local_context);
     blacs_gridexit_(&global_context);
 }
