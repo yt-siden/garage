@@ -56,8 +56,7 @@ int main(int argc, char* argv[])
     */
 
     // parameters
-    // NOTE: Followings should be const, however, they are variable due to technical limitation
-    int one = 1, zero = 0, negone = -1;
+    const int one = 1, zero = 0, negone = -1;
 
     // get process information
     int mypnum, pnum;
