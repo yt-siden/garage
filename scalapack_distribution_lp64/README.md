@@ -96,7 +96,8 @@ distribute
 % mpirun -np 4 ./distribution_test_ilp64 30000 2 2 32 32
 Generating matrix A...
 distribute
-mpirun -np 4 ./distribution_test_ilp64 30000 2 2 32 32  133.03s user 8.93s system 399% cpu 35.547 total
+release context
+mpirun -np 4 ./distribution_test_ilp64 30000 2 2 32 32  146.09s user 11.48s system 399% cpu 39.434 total
 
 # n=30000 -> ok
 
@@ -106,7 +107,7 @@ distribute
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 32703 RUNNING AT **************************
+=   PID 33761 RUNNING AT **************************
 =   EXIT CODE: 139
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
@@ -114,22 +115,23 @@ distribute
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 32703 RUNNING AT **************************
+=   PID 33761 RUNNING AT **************************
 =   EXIT CODE: 11
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
 ===================================================================================
    Intel(R) MPI Library troubleshooting guide:
-         https://software.intel.com/node/561764
+      https://software.intel.com/node/561764
 ===================================================================================
-mpirun -np 4 ./distribution_test_ilp64 32768 2 2 32 32  360.08s user 45.46s system 353% cpu 1:54.60 total
+mpirun -np 4 ./distribution_test_ilp64 32768 2 2 32 32  388.92s user 50.01s system 351% cpu 2:05.02 total
 
 # n=32768 (=2^15) -> ng
 
 % mpirun -np 4 ./distribution_test_ilp64 32767 2 2 32 32
 Generating matrix A...
 distribute
-mpirun -np 4 ./distribution_test_ilp64 32767 2 2 32 32  164.76s user 10.69s system 399% cpu 43.914 total
+release context
+mpirun -np 4 ./distribution_test_ilp64 32767 2 2 32 32  171.97s user 13.30s system 399% cpu 46.368 total
 
 # n=32767 -> ok
 ```
