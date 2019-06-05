@@ -2,13 +2,15 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include <numeric>
 #include <cstdint>
 #include <cassert>
 
 #include <mkl_scalapack.h>
+#include <mkl_blacs.h>
 
 #ifdef MKL_ILP64
-using IndexType = std::int64_t;
+using IndexType = long long;
 #else
 using IndexType = std::int32_t;
 #endif
@@ -32,7 +34,7 @@ T convert(const char* str)
 int main(int argc, char* argv[])
 {
     // constants
-    const IndexType one=1, zero=0, negone=-1;
+    IndexType one=1, zero=0;
 
     // process numbers
     IndexType myrank, pnum;
@@ -57,17 +59,21 @@ int main(int argc, char* argv[])
     assert(n >= nb);
 
     // set nprow*npcol grid
-    IndexType myrow, mycol;
-    blacs_gridinit_(&context, &nprow, &npcol, &myrow, &mycol);
+    IndexType myrow, mycol, new_nprow, new_npcol;
+    blacs_gridinit_(&context, "R", &nprow, &npcol);
+    blacs_gridinfo_(&context, &new_nprow, &new_npcol, &myrow, &mycol);
+    assert(new_nprow == nprow);
+    assert(new_npcol == npcol);
 
     // matrices
     std::vector<double> mat_A(1);
     if (myrow == 0 && mycol == 0)
     {
+        std::cout << "Generating matrix A..." << std::endl;
         mat_A.resize(static_cast<std::uint64_t>(n)*n);
         std::iota(mat_A.begin(), mat_A.end(), 0);
         for (auto&& v : mat_A)
-            v %= 100;
+            v = static_cast<IndexType>(v) % 100;
     }
 
     blacs_barrier_(&context, "A");
@@ -77,7 +83,7 @@ int main(int argc, char* argv[])
     std::vector<double> mat_B(static_cast<std::uint64_t>(myROCr)*myROCc);
 
     // descriptors
-    IndexType desc_A[9]= {
+    IndexType desc_A[9] = {
         1, // DTYPE_ (block cyclic)
         context, // CTXT_
         n, // M_
@@ -88,7 +94,7 @@ int main(int argc, char* argv[])
         0, // CSRC_
         (myrow == 0 ? n : 1) // LLD_
     };
-    IndexType desc_B[9]= {
+    IndexType desc_B[9] = {
         1, // DTYPE_ (block cyclic)
         context, // CTXT_
         n, // M_
@@ -100,11 +106,17 @@ int main(int argc, char* argv[])
         myROCr // LLD_
     };
 
+    if (myrow == 0 && mycol == 0)
+        std::cout << "distribute" << std::endl;
+
     // distribute
     pdgemr2d(&n, &n,
             &mat_A[0], &one, &one, desc_A,
             &mat_B[0], &one, &one, desc_B,
             &context);
+
+    if (myrow == 0 && mycol == 0)
+        std::cout << "release context" << std::endl;
 
     // release context
     blacs_gridexit_(&context);
