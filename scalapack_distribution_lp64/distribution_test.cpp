@@ -117,6 +117,7 @@ int main(int argc, char* argv[])
 
     if (myrow == 0 && mycol == 0)
         std::cout << "release context" << std::endl;
+    blacs_barrier_(&context, "A");
 
     // release context
     blacs_gridexit_(&context);
