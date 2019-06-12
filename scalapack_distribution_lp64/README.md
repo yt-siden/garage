@@ -159,6 +159,8 @@ MKL_SCALAPACK_ALLOCATE in mr2d_malloc.c is unsucceseful, size = 1844674405879531
 mpirun -np 4 ./distribution_test_lp64 49302 2 2 32 32  346.81s user 18.74s system 399% cpu 1:31.41 total
 ```
 
+MKLがエラーをハンドルして終了．
+
 ### 調査(LP64, n=49302, 4x4)
 
 ```
@@ -168,6 +170,8 @@ distribute
 MKL_SCALAPACK_ALLOCATE in mr2d_malloc.c is unsucceseful, size = 18446744058795310880
 mpirun -np 16 ./distribution_test_lp64 49302 4 4 32 32  1536.50s user 80.02s system 1599% cpu 1:41.06 total
 ```
+
+同上．
 
 ### 調査(ILP64, n=49302, 2x2)
 
@@ -197,6 +201,8 @@ distribute
 mpirun -np 4 ./distribution_test_ilp64 49302 2 2 32 32  825.28s user 110.82s system 361% cpu 4:18.67 total
 ```
 
+MPIの関数で死亡．
+
 ### 調査(ILP64, n=49302, 4x4)
 
 ```
@@ -206,6 +212,8 @@ distribute
 release context
 mpirun -np 16 ./distribution_test_ilp64 49302 4 4 32 32  1641.60s user 98.03s system 1597% cpu 1:48.93 total
 ```
+
+無事．
 
 ## 結論
 
