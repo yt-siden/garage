@@ -145,9 +145,75 @@ C/C++では，ScaLAPACKの2D block cyclicで持つsub-matrixの大きさは，
 **(myROCr) x (myROCc) x sizeof(T) < 2^31**
 となるようにするべきでしょう．
 
+## 追記 (2019-06-12)
+
+タレコミ元の後輩のコードと同じパラメータで調査
+
+### 調査(LP64, n=49302, 2x2)
+
+```
+% mpirun -np 4 ./distribution_test_lp64 49302 2 2 32 32
+Generating matrix A...
+distribute
+MKL_SCALAPACK_ALLOCATE in mr2d_malloc.c is unsucceseful, size = 18446744058795310880
+mpirun -np 4 ./distribution_test_lp64 49302 2 2 32 32  346.81s user 18.74s system 399% cpu 1:31.41 total
+```
+
+### 調査(LP64, n=49302, 4x4)
+
+```
+[12:09:09 yano@gauss:/mnt/SSD1/yano/test]
+% mpirun -np 16 ./distribution_test_lp64 49302 4 4 32 32
+Generating matrix A...
+distribute
+MKL_SCALAPACK_ALLOCATE in mr2d_malloc.c is unsucceseful, size = 18446744058795310880
+mpirun -np 16 ./distribution_test_lp64 49302 4 4 32 32  1536.50s user 80.02s system 1599% cpu 1:41.06 total
+```
+
+### 調査(ILP64, n=49302, 2x2)
+
+```
+% mpirun -np 4 ./distribution_test_ilp64 49302 2 2 32 32
+Generating matrix A...
+distribute
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 15913 RUNNING AT gauss.mma.cs.tsukuba.ac.jp
+=   EXIT CODE: 139
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   PID 15913 RUNNING AT gauss.mma.cs.tsukuba.ac.jp
+=   EXIT CODE: 11
+=   CLEANING UP REMAINING PROCESSES
+=   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
+===================================================================================
+   Intel(R) MPI Library troubleshooting guide:
+     https://software.intel.com/node/561764
+===================================================================================
+mpirun -np 4 ./distribution_test_ilp64 49302 2 2 32 32  825.28s user 110.82s system 361% cpu 4:18.67 total
+```
+
+### 調査(ILP64, n=49302, 4x4)
+
+```
+% mpirun -np 16 ./distribution_test_ilp64 49302 4 4 32 32
+Generating matrix A...
+distribute
+release context
+mpirun -np 16 ./distribution_test_ilp64 49302 4 4 32 32  1641.60s user 98.03s system 1597% cpu 1:48.93 total
+```
+
 ## 結論
 
-MKL ScaLAPACK LP64インターフェースの問題ではなく，MPI側の問題．
+~~MKL ScaLAPACK LP64インターフェースの問題ではなく，MPI側の問題．~~
+
+- デカい行列を扱うときはILP64インターフェースを用いるようにしよう
+- 1プロセスあたりの配列の要素数がintをオーバーフローしないようにしよう
 
 ## 参考文献
 
