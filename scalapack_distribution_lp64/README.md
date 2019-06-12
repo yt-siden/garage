@@ -162,7 +162,6 @@ mpirun -np 4 ./distribution_test_lp64 49302 2 2 32 32  346.81s user 18.74s syste
 ### 調査(LP64, n=49302, 4x4)
 
 ```
-[12:09:09 yano@gauss:/mnt/SSD1/yano/test]
 % mpirun -np 16 ./distribution_test_lp64 49302 4 4 32 32
 Generating matrix A...
 distribute
@@ -179,7 +178,7 @@ distribute
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 15913 RUNNING AT gauss.mma.cs.tsukuba.ac.jp
+=   PID 15913 RUNNING AT **************************
 =   EXIT CODE: 139
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
@@ -187,7 +186,7 @@ distribute
 
 ===================================================================================
 =   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
-=   PID 15913 RUNNING AT gauss.mma.cs.tsukuba.ac.jp
+=   PID 15913 RUNNING AT **************************
 =   EXIT CODE: 11
 =   CLEANING UP REMAINING PROCESSES
 =   YOU CAN IGNORE THE BELOW CLEANUP MESSAGES
